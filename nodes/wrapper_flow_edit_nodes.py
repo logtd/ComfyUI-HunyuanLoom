@@ -1,7 +1,6 @@
 import torch
 import gc
 
-
 from diffusers.utils.torch_utils import randn_tensor
 import comfy.model_management as mm
 from ..utils.rope_utils import get_rotary_pos_embed
@@ -29,6 +28,9 @@ class HyVideoFlowEditSamplerNode:
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "force_offload": ("BOOLEAN", {"default": True}),
             },
+            "optional": {
+                "teacache_args": ("TEACACHEARGS", ),
+            }
         }
 
     RETURN_TYPES = ("LATENT",)
@@ -50,7 +52,9 @@ class HyVideoFlowEditSamplerNode:
                 drift_guidance_scale,
                 seed, 
                 samples, 
-                force_offload):
+                force_offload,
+                teacache_args=None):  # Add teacache_args as an optional parameter
+
         model = model.model
 
         device = mm.get_torch_device()
@@ -77,13 +81,32 @@ class HyVideoFlowEditSamplerNode:
 
         freqs_cos, freqs_sin = get_rotary_pos_embed(transformer, num_frames, height, width)
 
-        
+        # Initialize TeaCache if enabled
+        if teacache_args is not None:
+            # Check if dimensions have changed since last run
+            if (not hasattr(transformer, 'last_dimensions') or
+                    transformer.last_dimensions != (height, width, num_frames) or
+                    not hasattr(transformer, 'last_frame_count') or
+                    transformer.last_frame_count != num_frames):
+                # Reset TeaCache state on dimension change
+                transformer.cnt = 0
+                transformer.accumulated_rel_l1_distance = 0
+                transformer.previous_modulated_input = None
+                transformer.previous_residual = None
+                transformer.last_dimensions = (height, width, num_frames)
+                transformer.last_frame_count = num_frames
+
+            transformer.enable_teacache = True
+            transformer.num_steps = steps
+            transformer.rel_l1_thresh = teacache_args["rel_l1_thresh"]
+        else:
+            transformer.enable_teacache = False
+
         if model["block_swap_args"] is not None:
             for name, param in transformer.named_parameters():
-                #print(name, param.data.device)
                 if "single" not in name and "double" not in name:
                     param.data = param.data.to(device)
-                
+            
             transformer.block_swap(
                 model["block_swap_args"]["double_blocks_to_swap"] - 1 , 
                 model["block_swap_args"]["single_blocks_to_swap"] - 1,
@@ -260,5 +283,3 @@ class HyVideoFlowEditSamplerNode:
         return ({
             "samples": x_tgt / VAE_SCALING_FACTOR
             },)
-
-
