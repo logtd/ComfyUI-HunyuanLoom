@@ -29,7 +29,7 @@ def _feta_score(query_image, key_image, head_dim, num_frames, enhance_weight):
     return enhance_scores
 
 
-
+@torch.compiler.disable()
 def get_feta_scores(img_q, img_k, transformer_options):
     num_frames = transformer_options['original_shape'][2]
     _, num_heads, ST, head_dim = img_q.shape
