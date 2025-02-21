@@ -1,7 +1,7 @@
 from .nodes.modify_hy_model_node import ConfigureModifiedHYNode
 from .nodes.hy_model_pred_nodes import HYInverseModelSamplingPredNode, HYReverseModelSamplingPredNode
 from .nodes.rectified_sampler_nodes import HYForwardODESamplerNode, HYReverseODESamplerNode
-from .nodes.flowedit_nodes import HYFlowEditGuiderNode, HYFlowEditSamplerNode, HYFlowEditGuiderCFGNode
+from .nodes.flowedit_nodes import HYFlowEditGuiderNode, HYFlowEditGuiderAdvNode, HYFlowEditSamplerNode, HYFlowEditGuiderCFGNode, HYFlowEditGuiderCFGAdvNode
 
 from .nodes.hy_regional_cond_nodes import HYApplyRegionalCondsNode, HYCreateRegionalCondNode
 from .nodes.hy_attn_override_node import HYAttnOverrideNode
@@ -20,7 +20,9 @@ NODE_CLASS_MAPPINGS = {
     "HYReverseODESampler": HYReverseODESamplerNode,
     # FlowEdit
     "HYFlowEditGuider": HYFlowEditGuiderNode,
+    "HYFlowEditGuiderAdv": HYFlowEditGuiderAdvNode,
     "HYFlowEditGuiderCFG": HYFlowEditGuiderCFGNode,
+    "HYFlowEditGuiderCFGAdv": HYFlowEditGuiderCFGAdvNode,
     "HYFlowEditSampler": HYFlowEditSamplerNode,
     # Regional
     "HYApplyRegionalConds": HYApplyRegionalCondsNode,
@@ -42,6 +44,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # FlowEdit
     "HYFlowEditGuider": "HY FlowEdit Guider",
     "HYFlowEditGuiderCFG": "HY FlowEdit Guider CFG",
+    "HYFlowEditGuiderCFGAdv": "HY FlowEdit Guider CFG Adv.",
     "HYFlowEditSampler": "HY FlowEdit Sampler",
     # Regional
     "HYApplyRegionalConds": "HY Apply Regional Conds",

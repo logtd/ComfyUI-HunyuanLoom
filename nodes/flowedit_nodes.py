@@ -8,6 +8,7 @@ class FlowEditGuider(CFGGuider):
     def __init__(self, model_patcher):
         super().__init__(model_patcher)
         self.cfgs = {}
+        self.num_repeats = 1
 
     def set_conds(self, **kwargs):
         self.inner_set_conds(kwargs)
@@ -15,14 +16,35 @@ class FlowEditGuider(CFGGuider):
     def set_cfgs(self, **kwargs):
         self.cfgs = {**kwargs}
 
+    def set_num_repeats(self, num_repeats):
+        self.num_repeats = num_repeats
+
     def predict_noise(self, x, timestep, model_options={}, seed=None):
         latent_type = model_options['transformer_options']['latent_type']
         positive = self.conds.get(f'{latent_type}_positive', None)
         negative = self.conds.get(f'{latent_type}_negative', None)
         cfg = self.cfgs.get(latent_type, self.cfg)
-        return sampling_function(self.inner_model, x, timestep, negative, positive, cfg, model_options=model_options, seed=seed)
+
+        if self.num_repeats == 1:
+            return sampling_function(self.inner_model, x, timestep, negative, positive, cfg, model_options=model_options, seed=seed)
+
+        # Multiple samples case
+        predictions = None
+        for i in range(self.num_repeats):
+            current_seed = None if seed is None else seed + i
+            current_pred = sampling_function(
+                self.inner_model, x, timestep, negative, positive, cfg, 
+                model_options=model_options, seed=current_seed
+            )
+            if predictions is None:
+                predictions = current_pred
+            else:
+                predictions += current_pred
+        
+        return predictions / self.num_repeats
 
 
+# Basic node for model compatibility
 class HYFlowEditGuiderNode:
     @classmethod
     def INPUT_TYPES(s):
@@ -35,7 +57,6 @@ class HYFlowEditGuiderNode:
                 }
 
     RETURN_TYPES = ("GUIDER",)
-
     FUNCTION = "get_guider"
     CATEGORY = "hunyuanloom"
 
@@ -44,7 +65,29 @@ class HYFlowEditGuiderNode:
         guider.set_conds(source_positive=source_cond, target_positive=target_cond)
         guider.set_cfg(1.0)
         return (guider,)
-    
+
+class HYFlowEditGuiderAdvNode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required":
+                    {
+                        "model": ("MODEL",),
+                        "source_cond": ("CONDITIONING", ),
+                        "target_cond": ("CONDITIONING", ),
+                        "num_repeats": ("INT", {"default": 1, "min": 1, "max": 10}),
+                     }
+                }
+
+    RETURN_TYPES = ("GUIDER",)
+    FUNCTION = "get_guider"
+    CATEGORY = "hunyuanloom"
+
+    def get_guider(self, model, source_cond, target_cond, num_repeats):
+        guider = FlowEditGuider(model)
+        guider.set_conds(source_positive=source_cond, target_positive=target_cond)
+        guider.set_cfg(1.0)
+        guider.set_num_repeats(num_repeats)
+        return (guider,)
 
 
 class HYFlowEditGuiderCFGNode:
@@ -57,26 +100,56 @@ class HYFlowEditGuiderCFGNode:
                         "source_uncond": ("CONDITIONING", ),
                         "target_cond": ("CONDITIONING", ),
                         "target_uncond": ("CONDITIONING", ),
+                        "source_cfg": ("FLOAT", {"default": 2, "min": 0, "max": 0xffffffffffffffff, "step": 0.01 }),
+                        "target_cfg": ("FLOAT", {"default": 4.5, "min": 0, "max": 0xffffffffffffffff, "step": 0.01 }),
                      }
                 }
 
     RETURN_TYPES = ("GUIDER",)
-
     FUNCTION = "get_guider"
     CATEGORY = "hunyuanloom"
 
-    def get_guider(self, model, source_cond, source_uncond, target_cond, target_uncond):
+    def get_guider(self, model, source_cond, source_uncond, target_cond, target_uncond, source_cfg, target_cfg):
         guider = FlowEditGuider(model)
-        guider.set_conds(source_positive=source_cond, source_negative=source_uncond, target_positive=target_cond, target_negative=target_uncond)
-        guider.set_cfg(1.0)
+        guider.set_conds(source_positive=source_cond, source_negative=source_uncond, 
+                        target_positive=target_cond, target_negative=target_uncond)
+        guider.set_cfgs(source=source_cfg, target=target_cfg)
         return (guider,)
 
+
+class HYFlowEditGuiderCFGAdvNode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required":
+                    {
+                        "model": ("MODEL",),
+                        "source_cond": ("CONDITIONING", ),
+                        "source_uncond": ("CONDITIONING", ),
+                        "target_cond": ("CONDITIONING", ),
+                        "target_uncond": ("CONDITIONING", ),
+                        "source_cfg": ("FLOAT", {"default": 2, "min": 0, "max": 0xffffffffffffffff, "step": 0.01 }),
+                        "target_cfg": ("FLOAT", {"default": 4.5, "min": 0, "max": 0xffffffffffffffff, "step": 0.01 }),
+                        "num_repeats": ("INT", {"default": 1, "min": 1, "max": 10}),
+                     }
+                }
+
+    RETURN_TYPES = ("GUIDER",)
+    FUNCTION = "get_guider"
+    CATEGORY = "hunyuanloom"
+
+    def get_guider(self, model, source_cond, source_uncond, target_cond, target_uncond, source_cfg, target_cfg, num_repeats):
+        guider = FlowEditGuider(model)
+        guider.set_conds(source_positive=source_cond, source_negative=source_uncond, 
+                        target_positive=target_cond, target_negative=target_uncond)
+        guider.set_cfgs(source=source_cfg, target=target_cfg)
+        guider.set_num_repeats(num_repeats)
+        return (guider,)
 
 def get_flowedit_sample(skip_steps, refine_steps, generator):
     @torch.no_grad()
     def flowedit_sample(model, x_init, sigmas, extra_args=None, callback=None, disable=None):
         extra_args = {} if extra_args is None else extra_args
-
+        
         model_options = extra_args.get('model_options', {})
         transformer_options = model_options.get('transformer_options', {})
         transformer_options = {**transformer_options}
@@ -96,7 +169,6 @@ def get_flowedit_sample(skip_steps, refine_steps, generator):
         else:
             extra_args['denoise_mask'] = None
             source_extra_args['denoise_mask'] = None
-        #     noise_mask = 1 - noise_mask
 
         for i in trange(N, disable=disable):
             sigma = sigmas[i]
