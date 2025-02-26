@@ -1,14 +1,14 @@
-from .nodes.modify_hy_model_node import ConfigureModifiedHYNode
-from .nodes.hy_model_pred_nodes import HYInverseModelSamplingPredNode, HYReverseModelSamplingPredNode
-from .nodes.rectified_sampler_nodes import HYForwardODESamplerNode, HYReverseODESamplerNode
-from .nodes.flowedit_nodes import HYFlowEditGuiderNode, HYFlowEditGuiderAdvNode, HYFlowEditSamplerNode, HYFlowEditGuiderCFGNode, HYFlowEditGuiderCFGAdvNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.modify_hy_model_node import ConfigureModifiedHYNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.hy_model_pred_nodes import HYInverseModelSamplingPredNode, HYReverseModelSamplingPredNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.rectified_sampler_nodes import HYForwardODESamplerNode, HYReverseODESamplerNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.flowedit_nodes import HYFlowEditGuiderNode, HYFlowEditGuiderAdvNode, HYFlowEditSamplerNode, HYFlowEditGuiderCFGNode, HYFlowEditGuiderCFGAdvNode
 
-from .nodes.hy_regional_cond_nodes import HYApplyRegionalCondsNode, HYCreateRegionalCondNode
-from .nodes.hy_attn_override_node import HYAttnOverrideNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.hy_regional_cond_nodes import HYApplyRegionalCondsNode, HYCreateRegionalCondNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.hy_attn_override_node import HYAttnOverrideNode
 
-from .nodes.hy_feta_enhance_node import HYFetaEnhanceNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.hy_feta_enhance_node import HYFetaEnhanceNode
 
-from .nodes.wrapper_flow_edit_nodes import HyVideoFlowEditSamplerNode
+from ComfyUI_hunyuanloom_nodes.nodes.nodes.wrapper_flow_edit_nodes import HyVideoFlowEditSamplerNode
 
 
 NODE_CLASS_MAPPINGS = {
