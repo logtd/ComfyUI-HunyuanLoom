@@ -1,0 +1,41 @@
+[project]
+name = "comfyui-hunyuanloom"
+description = "ComfyUI diffusers wrapper [a/FlowEdit](https://github.com/fallenshock/FlowEdit)"
+version = "1.0.1"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/logtd/ComfyUI-HunyuanLoom"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = "logtd"
+DisplayName = "ComfyUI-hunyuanloom"
+Icon = ""
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [ 
+    "ComfyUI_hunyuanloom_nodes",
+    "ComfyUI_hunyuanloom_nodes.modules",
+    "ComfyUI_hunyuanloom_nodes.nodes",
+    "ComfyUI_hunyuanloom_nodes.utils",
+]
+
+[tool.setuptools.package-dir]
+"ComfyUI_hunyuanloom_nodes" = "."
+"ComfyUI_hunyuanloom_nodes.modules" = "modules"
+"ComfyUI_hunyuanloom_nodes.nodes" = "nodes"
+"ComfyUI_hunyuanloom_nodes.utils" = "utils"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.package-data]
+"*" = ["**/*.js", "**/*.json", "**/*.pt", "*.pt"]
+
+[project.entry-points."comfyui.custom_nodes"]
+ComfyUI_hunyuanloom_nodes = "ComfyUI_hunyuanloom_nodes"
