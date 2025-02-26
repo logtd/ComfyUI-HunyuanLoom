@@ -1,5 +1,5 @@
 [project]
-name = "comfyui-hunyuanloom"
+name = "comfyui-hunyaunloom"
 description = "ComfyUI diffusers wrapper [a/FlowEdit](https://github.com/fallenshock/FlowEdit)"
 version = "1.0.1"
 license = {file = "LICENSE"}
